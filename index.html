@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#8fd3ff">
+  <title>There's No Floor</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- In-game HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-left">
+      <div id="hud-level"></div>
+      <div id="hud-time">0:00.00</div>
+    </div>
+    <div class="hud-right">
+      <div id="hud-lives"></div>
+      <div id="hud-coins"></div>
+    </div>
+    <div id="hud-powers"></div>
+    <button id="btn-pause" class="icon-btn" data-act="pause">II</button>
+    <div id="toast"></div>
+  </div>
+  <div id="flash"></div>
+
+  <!-- Touch controls -->
+  <div id="touch" class="hidden">
+    <div id="joy-base"><div id="joy-knob"></div></div>
+    <div id="joy-hint">MOVE</div>
+    <button id="btn-jump">JUMP</button>
+  </div>
+
+  <!-- Screens -->
+  <div id="menu" class="screen">
+    <h1 class="title">THERE'S<br>NO FLOOR</h1>
+    <p class="sub">Don't look down.</p>
+    <button class="btn" data-act="play">PLAY</button>
+    <button class="btn" data-act="levels">LEVELS</button>
+    <div class="row">
+      <button class="btn small tg-music" data-act="music">MUSIC</button>
+      <button class="btn small tg-sfx" data-act="sfx">SFX</button>
+    </div>
+    <div class="help">
+      <p class="pc-only">WASD move &middot; SPACE jump &middot; MOUSE look &middot; Q/E turn &middot; ESC pause</p>
+      <p class="touch-only">Left side: move &middot; Right side: look &middot; Button: jump</p>
+    </div>
+  </div>
+
+  <div id="levels" class="screen hidden">
+    <h2>SELECT LEVEL</h2>
+    <div id="level-grid"></div>
+    <button class="btn small" data-act="menu">BACK</button>
+  </div>
+
+  <div id="pause" class="screen hidden">
+    <h2>PAUSED</h2>
+    <button class="btn" data-act="resume">RESUME</button>
+    <button class="btn" data-act="restart">RESTART</button>
+    <div class="row">
+      <button class="btn small tg-music" data-act="music">MUSIC</button>
+      <button class="btn small tg-sfx" data-act="sfx">SFX</button>
+    </div>
+    <button class="btn small" data-act="menu">MAIN MENU</button>
+  </div>
+
+  <div id="complete" class="screen hidden">
+    <h2 class="win">LEVEL COMPLETE!</h2>
+    <div id="complete-stats" class="stats"></div>
+    <button class="btn" id="btn-next" data-act="next">NEXT LEVEL</button>
+    <button class="btn" data-act="restart">RETRY</button>
+    <button class="btn small" data-act="menu">MAIN MENU</button>
+  </div>
+
+  <div id="gameover" class="screen hidden">
+    <h2 class="lose">GAME OVER</h2>
+    <p class="sub">You fell out of lives.</p>
+    <button class="btn" data-act="restart">TRY AGAIN</button>
+    <button class="btn small" data-act="menu">MAIN MENU</button>
+  </div>
+
+  <!-- Three.js: local copy if present, otherwise CDN -->
+  <script src="js/vendor/three.min.js"></script>
+  <script>window.THREE || document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"><\/script>');</script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
