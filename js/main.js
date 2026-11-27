@@ -41,8 +41,8 @@
   // ---------- State ----------
   const MAX_LIVES = 10;
   let state = 'menu', mode = 'level', li = 0, time = 0, lives = MAX_LIVES, coins = 0;
-  let dist = 0, nextMilestone = 100, runStartBest = 0, passedRecord = false, lastSkyHex = '';
-  let respawn = new THREE.Vector3(), invuln = 0, deadT = 0, hadLock = false;
+  let distance = 0, nextMilestone = 100, runStartBest = 0, passedRecord = false, lastSkyHex = '';
+  let respawn = new THREE.Vector3(), invuln = 0, deadT = 0, hadLock = false, hudCache = '';
   let yaw = 0, pitch = 0.35;
   const camT = new THREE.Vector3();
   const skyTarget = new THREE.Color();
@@ -112,7 +112,7 @@
 
   function startLevel(i) {
     mode = 'level'; li = i; loadScenery(i);
-    time = 0; lives = MAX_LIVES; coins = 0; dist = 0; invuln = 0; deadT = 0;
+    time = 0; lives = MAX_LIVES; coins = 0; distance = 0; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
     yaw = 0; pitch = 0.35; hudCache = '';
     state = 'playing'; show(null);
@@ -128,7 +128,7 @@
     respawn.set(0, 0, 0);
     player.reset(respawn); player.group.visible = true;
     camT.copy(respawn);
-    time = 0; lives = MAX_LIVES; coins = 0; dist = 0; nextMilestone = 100;
+    time = 0; lives = MAX_LIVES; coins = 0; distance = 0; nextMilestone = 100;
     runStartBest = save.endlessBest; passedRecord = false; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
     yaw = 0; pitch = 0.35; hudCache = '';
@@ -170,10 +170,10 @@
       state = 'gameover'; Sound.stopMusic(); Sound.gameover();
       const goStats = $('gameover-stats');
       if (mode === 'endless') {
-        const newBest = dist > runStartBest && dist > 0;
-        if (dist > save.endlessBest) save.endlessBest = dist;
+        const newBest = distance > runStartBest && distance > 0;
+        if (distance > save.endlessBest) save.endlessBest = distance;
         goStats.innerHTML =
-          `DISTANCE: ${dist}m ${newBest ? '<span class="new">NEW BEST!</span>' : ''}<br>` +
+          `DISTANCE: ${distance}m ${newBest ? '<span class="new">NEW BEST!</span>' : ''}<br>` +
           `BEST: ${save.endlessBest}m<br>` +
           `<span class="gold">COINS: ${coins}</span><br>TIME: ${fmt(time)}`;
         goStats.classList.remove('hidden');
@@ -218,15 +218,15 @@
   // ---------- Buttons ----------
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-act]'); if (!b) return;
-    Sound.init();
+    try { Sound.init(); } catch (err) { /* ignore */ }
     const act = b.dataset.act;
     if (act === 'sfx') {
       Sound.setSfx(!Sound.sfxOn);
       refreshToggles();
-      if (Sound.sfxOn) Sound.click();
+      if (Sound.sfxOn) try { Sound.click(); } catch (err) { /* ignore */ }
       return;
     }
-    Sound.click();
+    try { Sound.click(); } catch (err) { /* ignore */ }
     switch (act) {
       case 'play': startLevel(Math.min(save.unlocked, LEVELS.length) - 1); break;
       case 'endless': startEndless(); break;
@@ -251,14 +251,13 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
   // ---------- HUD ----------
-  let hudCache = '';
   function updateHUD() {
     const chips = [];
     for (const k of ['double', 'speed', 'jump']) if (powers[k] > 0) chips.push([k, `${POWER_INFO[k].name} ${Math.ceil(powers[k])}s`]);
     if (powers.shield) chips.push(['shield', 'SHIELD']);
-    const best = mode === 'endless' ? Math.max(dist, save.endlessBest) : 0;
+    const best = mode === 'endless' ? Math.max(distance, save.endlessBest) : 0;
     const key = `${mode}|${li}|${lives}|${coins}|${best}|${chips.map(c => c[1]).join()}`;
-    $('hud-time').textContent = mode === 'endless' ? `${dist}m` : fmt(time);
+    $('hud-time').textContent = mode === 'endless' ? `${distance}m` : fmt(time);
     if (key === hudCache) return; hudCache = key;
     $('hud-level').textContent = mode === 'endless' ? `INF BEST ${best}m` : `LV ${li + 1}`;
     const pips = Array.from({ length: MAX_LIVES }, (_, idx) =>
@@ -302,14 +301,14 @@
         if (mode === 'endless' && state === 'playing') {
           world.updateEndless(player.pos, respawn);
           const curDist = Math.max(0, Math.floor(-player.pos.z));
-          if (curDist > dist) {
-            dist = curDist;
-            if (dist > save.endlessBest) save.endlessBest = dist;
-            if (!passedRecord && runStartBest > 0 && dist > runStartBest) {
+          if (curDist > distance) {
+            distance = curDist;
+            if (distance > save.endlessBest) save.endlessBest = distance;
+            if (!passedRecord && runStartBest > 0 && distance > runStartBest) {
               passedRecord = true;
               toast('NEW BEST DISTANCE!');
             }
-            if (dist >= nextMilestone) {
+            if (distance >= nextMilestone) {
               toast(`${nextMilestone}M REACHED!`);
               nextMilestone += 100;
             }
@@ -341,11 +340,11 @@
     // Camera follow (orbit around the player)
     const target = player.pos.clone(); target.y += 1.2;
     if (state !== 'playing' || deadT <= 0) camT.lerp(target, 1 - Math.exp(-10 * dt));
-    const dist = state === 'menu' || state === 'levels' ? 10 : 7;
+    const camDist = state === 'menu' || state === 'levels' ? 10 : 7;
     camera.position.set(
-      camT.x + Math.sin(yaw) * Math.cos(pitch) * dist,
-      camT.y + Math.sin(pitch) * dist,
-      camT.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+      camT.x + Math.sin(yaw) * Math.cos(pitch) * camDist,
+      camT.y + Math.sin(pitch) * camDist,
+      camT.z + Math.cos(yaw) * Math.cos(pitch) * camDist);
     camera.lookAt(camT);
 
     // Shadow light follows the player

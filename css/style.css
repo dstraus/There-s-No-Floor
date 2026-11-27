@@ -8,6 +8,7 @@ canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: blo
 .screen {
   position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 20px; background: rgba(20, 30, 60, 0.45); text-align: center; z-index: 10; overflow-y: auto;
+  touch-action: manipulation;
 }
 .title {
   font-size: clamp(28px, 8vw, 64px); line-height: 1.25; color: #ffeb3b;
@@ -20,10 +21,11 @@ h2.win { color: #b9f6ca; } h2.lose { color: #ff8a80; }
 .btn {
   font-family: inherit; font-size: 16px; color: #fff; background: #43a047; border: none; cursor: pointer;
   padding: 14px 28px; min-width: 220px; box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3), inset 4px 4px 0 rgba(255,255,255,0.25), 0 6px 0 rgba(0,0,0,0.35);
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.35);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.35); touch-action: manipulation;
 }
+.btn > * { pointer-events: none; }
 .btn:hover { filter: brightness(1.1); }
-.btn:active { transform: translateY(4px); box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3), 0 2px 0 rgba(0,0,0,0.35); }
+.btn:active { filter: brightness(0.92); box-shadow: inset 4px 4px 0 rgba(0,0,0,0.35), inset -2px -2px 0 rgba(255,255,255,0.15), 0 2px 0 rgba(0,0,0,0.35); }
 .btn.small { font-size: 11px; padding: 10px 16px; min-width: 120px; background: #5c6bc0; }
 .btn.endless { background: #8e24aa; }
 .btn .btn-sub { display: block; font-size: 9px; margin-top: 6px; color: #ffd54f; opacity: 0.95; }
@@ -37,7 +39,9 @@ body.touch .pc-only, body:not(.touch) .touch-only { display: none; }
 .lvl {
   font-family: inherit; color: #fff; border: none; cursor: pointer; padding: 14px 10px; background: #fb8c00; text-align: left;
   box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3), inset 4px 4px 0 rgba(255,255,255,0.25), 0 5px 0 rgba(0,0,0,0.35);
+  touch-action: manipulation;
 }
+.lvl > * { pointer-events: none; }
 .lvl .n { font-size: 12px; margin-bottom: 8px; } .lvl .d { font-size: 8px; line-height: 1.8; opacity: 0.9; }
 .lvl.locked { background: #616161; cursor: not-allowed; opacity: 0.8; }
 
@@ -59,8 +63,9 @@ body.touch .pc-only, body:not(.touch) .touch-only { display: none; }
 #hud-powers { position: absolute; top: 80px; left: 14px; display: flex; flex-direction: column; gap: 6px; }
 .chip { font-size: 9px; padding: 6px 8px; color: #fff; box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3); }
 .icon-btn {
-  pointer-events: auto; position: absolute; top: max(10px, env(safe-area-inset-top)); right: 12px; width: 42px; height: 42px;
+  pointer-events: auto; position: absolute; top: max(10px, env(safe-area-inset-top)); right: 12px; width: 46px; height: 46px;
   font-family: inherit; font-size: 12px; color: #fff; background: rgba(0,0,0,0.35); border: 3px solid rgba(255,255,255,0.7); cursor: pointer;
+  z-index: 8; touch-action: manipulation;
 }
 #toast {
   position: absolute; top: 28%; left: 50%; transform: translateX(-50%); font-size: 16px; color: #fff; white-space: nowrap;
