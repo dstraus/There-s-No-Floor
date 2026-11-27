@@ -462,6 +462,13 @@ class World {
     }
   }
 
+  resetPowers() {
+    for (const p of this.powers) {
+      p.timer = 0;
+      p.g.visible = true;
+    }
+  }
+
   // ---------- Effects ----------
   explosion(pos) {
     const m = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10),

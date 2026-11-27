@@ -202,6 +202,7 @@
       return;
     }
     player.reset(respawn); player.group.visible = true;
+    world.resetPowers();
     powers.double = powers.speed = powers.jump = 0;
     invuln = 1.2;
   }
