@@ -1,7 +1,7 @@
 // There's No Floor - input (keyboard + mouse, touch joystick or virtual arrow keys + camera drag + jump button)
 const Input = (() => {
   const keys = {};
-  const st = { move: { x: 0, y: 0 }, jumpHeld: false, jumpPressed: false, isTouch: false };
+  const st = { move: { x: 0, y: 0 }, jumpHeld: false, jumpPressed: false, isTouch: false, lastJumpTouch: false };
   const look = { x: 0, y: 0 };
   const MOUSE_SENS = 0.0025, TOUCH_SENS = 0.007, DRAG_SENS = 0.006;
   const JOY_RADIUS = 50;
@@ -19,7 +19,10 @@ const Input = (() => {
   const dpadState = { up: false, down: false, left: false, right: false };
   let canvas, opts, joyBase, joyKnob, joyHint, dpadEl, dpadBtns = {};
 
-  function pressJump() { if (!st.jumpHeld) st.jumpPressed = true; st.jumpHeld = true; }
+  function pressJump(fromTouch = false) {
+    if (!st.jumpHeld) { st.jumpPressed = true; st.lastJumpTouch = !!fromTouch; }
+    st.jumpHeld = true;
+  }
   function releaseJump() { st.jumpHeld = false; }
 
   function applyTouchModeUI() {
@@ -203,10 +206,10 @@ const Input = (() => {
     }
 
     const jb = document.getElementById('btn-jump');
-    jb.addEventListener('touchstart', e => { e.preventDefault(); pressJump(); }, opt);
+    jb.addEventListener('touchstart', e => { e.preventDefault(); pressJump(true); }, opt);
     jb.addEventListener('touchend', e => { e.preventDefault(); releaseJump(); }, opt);
     jb.addEventListener('touchcancel', e => { e.preventDefault(); releaseJump(); }, opt);
-    jb.addEventListener('mousedown', pressJump);
+    jb.addEventListener('mousedown', () => pressJump(st.isTouch));
     jb.addEventListener('mouseup', releaseJump);
   }
 
@@ -233,6 +236,9 @@ const Input = (() => {
   }
 
   const api = Object.assign(st, { init, update, consumeLook, endFrame, resetTouch, setTouchMode, keys });
-  Object.defineProperty(api, 'touchMode', { get() { return touchMode; }, enumerable: true });
+  Object.defineProperties(api, {
+    touchMode: { get() { return touchMode; }, enumerable: true },
+    looking: { get() { return lookTouch.id !== null || mouseDrag !== null; }, enumerable: true },
+  });
   return api;
 })();

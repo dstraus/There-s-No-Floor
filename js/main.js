@@ -20,7 +20,10 @@
 
   function resize() {
     renderer.setSize(innerWidth, innerHeight, false);
-    camera.aspect = innerWidth / innerHeight;
+    const aspect = innerWidth / Math.max(1, innerHeight);
+    camera.aspect = aspect;
+    // Widen FOV on tall portrait mobile screens so horizontal view isn't cramped
+    camera.fov = aspect < 1 ? Math.min(88, 65 + (1 - aspect) * 44) : 65;
     camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize); resize();
@@ -36,6 +39,8 @@
     coins(i) { return +localStorage.getItem('tnf_coins_' + i) || 0; },
     get endlessBest() { return +localStorage.getItem('tnf_endless_best') || 0; },
     set endlessBest(v) { localStorage.setItem('tnf_endless_best', v); },
+    get autoCam() { return localStorage.getItem('tnf_auto_cam') !== '0'; },
+    set autoCam(v) { localStorage.setItem('tnf_auto_cam', v ? '1' : '0'); },
   };
 
   // ---------- State ----------
@@ -43,7 +48,9 @@
   let state = 'menu', mode = 'level', li = 0, time = 0, lives = MAX_LIVES, coins = 0;
   let distance = 0, nextMilestone = 100, runStartBest = 0, passedRecord = false, lastSkyHex = '';
   let respawn = new THREE.Vector3(), invuln = 0, deadT = 0, hadLock = false, hudCache = '';
-  let yaw = 0, pitch = 0.35;
+  let yaw = 0, pitch = 0.35, manualLookT = 0;
+  let autoCam = save.autoCam;
+  const defaultPitch = () => (camera.aspect < 1 ? 0.35 + (1 - camera.aspect) * 0.25 : 0.35);
   const camT = new THREE.Vector3();
   const skyTarget = new THREE.Color();
   const powers = { double: 0, speed: 0, jump: 0, shield: false };
@@ -74,6 +81,7 @@
     document.querySelectorAll('.tg-sfx').forEach(b => { b.textContent = 'SFX: ' + (Sound.sfxOn ? 'ON' : 'OFF'); b.classList.toggle('off', !Sound.sfxOn); });
     const arrows = Input.touchMode === 'arrows';
     document.querySelectorAll('.tg-touch').forEach(b => { b.textContent = 'TOUCH: ' + (arrows ? 'ARROWS' : 'JOYSTICK'); });
+    document.querySelectorAll('.tg-autocam').forEach(b => { b.textContent = 'AUTO CAM: ' + (autoCam ? 'ON' : 'OFF'); b.classList.toggle('off', !autoCam); });
     const help = $('touch-help');
     if (help) help.textContent = arrows
       ? 'Arrow keys: move \u00b7 Drag screen: look \u00b7 Button: jump'
@@ -113,6 +121,7 @@
     setSky(lv.sky);
     respawn.set(lv.start[0], lv.start[1], lv.start[2]);
     player.reset(respawn); player.group.visible = true;
+    player.updateShadow(world.solids, true);
     camT.copy(respawn);
   }
 
@@ -120,7 +129,7 @@
     mode = 'level'; li = i; loadScenery(i);
     time = 0; lives = MAX_LIVES; coins = 0; distance = 0; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
-    yaw = 0; pitch = 0.35; hudCache = '';
+    yaw = 0; pitch = defaultPitch(); manualLookT = 0; hudCache = '';
     state = 'playing'; show(null);
     Input.resetTouch();
     Sound.init(); Sound.startMusic(true);
@@ -133,11 +142,12 @@
     setSky(ENDLESS_THEMES[0].sky);
     respawn.set(0, 0, 0);
     player.reset(respawn); player.group.visible = true;
+    player.updateShadow(world.solids, true);
     camT.copy(respawn);
     time = 0; lives = MAX_LIVES; coins = 0; distance = 0; nextMilestone = 100;
     runStartBest = save.endlessBest; passedRecord = false; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
-    yaw = 0; pitch = 0.35; hudCache = '';
+    yaw = 0; pitch = defaultPitch(); manualLookT = 0; hudCache = '';
     state = 'playing'; show(null);
     Input.resetTouch();
     Sound.init(); Sound.startMusic(true);
@@ -167,6 +177,7 @@
     }
     lives--; deadT = 1.0;
     player.group.visible = false;
+    player.updateShadow(null, false);
     world.burst(player.pos.clone().add(new THREE.Vector3(0, 0.8, 0)), 0xff7043, 22, 7);
     Sound.death(); flash('#ff1744');
   }
@@ -244,6 +255,7 @@
       case 'next': startLevel(Math.min(li + 1, LEVELS.length - 1)); break;
       case 'music': Sound.setMusic(!Sound.musicOn); refreshToggles(); break;
       case 'touchmode': Input.setTouchMode(Input.touchMode === 'arrows' ? 'joystick' : 'arrows'); refreshToggles(); break;
+      case 'autocam': autoCam = !autoCam; save.autoCam = autoCam; refreshToggles(); break;
     }
   });
   addEventListener('keydown', e => {
@@ -285,7 +297,24 @@
 
     if (state === 'playing') {
       const l = Input.consumeLook();
+      if (Math.abs(l.x) > 0.0001 || Math.abs(l.y) > 0.0001 || Input.looking) {
+        manualLookT = 0.7;
+      } else if (manualLookT > 0) {
+        manualLookT -= dt;
+      }
       yaw -= l.x; pitch = Math.max(-0.25, Math.min(1.2, pitch + l.y));
+
+      // Gentle auto-follow camera on mobile when walking and not dragging camera
+      if (Input.isTouch && autoCam && manualLookT <= 0 && deadT <= 0) {
+        const hs = Math.hypot(player.vel.x, player.vel.z);
+        if (hs > 1.2 && Input.move.y >= -0.15) {
+          const targetYaw = Math.atan2(-player.vel.x, -player.vel.z);
+          let diff = targetYaw - yaw;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          yaw += diff * (1 - Math.exp(-2.0 * dt));
+        }
+      }
 
       world.step(dt, Sound);
       if (deadT > 0) {
@@ -347,7 +376,8 @@
     // Camera follow (orbit around the player)
     const target = player.pos.clone(); target.y += 1.2;
     if (state !== 'playing' || deadT <= 0) camT.lerp(target, 1 - Math.exp(-10 * dt));
-    const camDist = state === 'menu' || state === 'levels' ? 10 : 7;
+    const portrait = camera.aspect < 1 ? (1 - camera.aspect) : 0;
+    const camDist = state === 'menu' || state === 'levels' ? 10 : 7 + portrait * 4.5;
     camera.position.set(
       camT.x + Math.sin(yaw) * Math.cos(pitch) * camDist,
       camT.y + Math.sin(pitch) * camDist,

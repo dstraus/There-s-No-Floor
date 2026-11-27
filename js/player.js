@@ -38,6 +38,15 @@ class Player {
     this.group.add(this.shield);
     scene.add(this.group);
 
+    // Crisp drop shadow projected straight down onto the platform below
+    this.dropShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.42, 20),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.42, depthWrite: false })
+    );
+    this.dropShadow.rotation.x = -Math.PI / 2;
+    this.dropShadow.visible = false;
+    scene.add(this.dropShadow);
+
     this.pos = new THREE.Vector3();
     this.vel = new THREE.Vector3();
     this.facing = 0; this.walk = 0;
@@ -74,14 +83,16 @@ class Player {
     let dx = fx * input.move.y + rx * input.move.x, dz = fz * input.move.y + rz * input.move.x;
     const len = Math.hypot(dx, dz);
     if (len > 1) { dx /= len; dz /= len; }
-    const accel = (this.onGround ? 60 : 30) * dt;
+    const accel = (this.onGround ? 60 : (input.isTouch ? 45 : 30)) * dt;
     const approach = (v, t) => (v < t ? Math.min(v + accel, t) : Math.max(v - accel, t));
     this.vel.x = approach(this.vel.x, dx * speed);
     this.vel.z = approach(this.vel.z, dz * speed);
 
-    // Jumping: coyote time + jump buffer + optional double jump
-    this.coyote = this.onGround ? 0.1 : this.coyote - dt;
-    this.jumpBuffer = input.jumpPressed ? 0.12 : this.jumpBuffer - dt;
+    // Jumping: coyote time + jump buffer + optional double jump (more forgiving on touch)
+    const coyoteMax = input.isTouch ? 0.18 : 0.1;
+    const bufferMax = input.isTouch ? 0.18 : 0.12;
+    this.coyote = this.onGround ? coyoteMax : this.coyote - dt;
+    this.jumpBuffer = input.jumpPressed ? bufferMax : this.jumpBuffer - dt;
     if (this.onGround) this.airJumps = 1;
     if (this.jumpBuffer > 0) {
       if (this.coyote > 0) {
@@ -92,8 +103,11 @@ class Player {
         events.push('djump');
       }
     }
-    // Variable jump height: release early for a shorter hop
-    if (this.jumping && !input.jumpHeld && this.vel.y > 0) { this.vel.y *= 0.5; this.jumping = false; }
+    // Variable jump height on keyboard; full jump on quick touch taps so mobile taps clear gaps
+    if (this.jumping && !input.jumpHeld && this.vel.y > 0) {
+      if (!input.lastJumpTouch) this.vel.y *= 0.5;
+      this.jumping = false;
+    }
     if (this.vel.y <= 0) this.jumping = false;
 
     // Integrate in small sub-steps for stable collisions
@@ -115,11 +129,26 @@ class Player {
         }
       }
       if (hitGround) landed = hitGround;
-      // X and Z axes
+      // X and Z axes (with ledge-grab forgiveness on touch)
       for (const ax of ['x', 'z']) {
         this.pos[ax] += this.vel[ax] * h;
         for (const s of solids) {
           if (!this.overlaps(s)) continue;
+          const lip = s.y1 - this.pos.y;
+          if (input.isTouch && lip > 0 && lip <= 0.3 && this.vel.y <= 3.5) {
+            const oldY = this.pos.y;
+            this.pos.y = s.y1;
+            let blocked = false;
+            for (const other of solids) {
+              if (other !== s && this.overlaps(other)) { blocked = true; break; }
+            }
+            if (!blocked) {
+              this.vel.y = Math.max(0, this.vel.y);
+              landed = s;
+              continue;
+            }
+            this.pos.y = oldY;
+          }
           const lo = ax === 'x' ? s.x0 : s.z0, hi = ax === 'x' ? s.x1 : s.z1;
           this.pos[ax] = this.pos[ax] < (lo + hi) / 2 ? lo - this.HW - 0.001 : hi + this.HW + 0.001;
           this.vel[ax] = 0;
@@ -130,7 +159,29 @@ class Player {
     this.ground = landed;
 
     this.animate(dt);
+    this.updateShadow(solids, true);
     return events;
+  }
+
+  updateShadow(solids, show = true) {
+    if (!show || !solids) { this.dropShadow.visible = false; return; }
+    const p = this.pos;
+    let bestY = -Infinity;
+    for (const s of solids) {
+      if (p.x >= s.x0 && p.x <= s.x1 && p.z >= s.z0 && p.z <= s.z1 && s.y1 <= p.y + 0.12) {
+        if (s.y1 > bestY) bestY = s.y1;
+      }
+    }
+    if (bestY === -Infinity) {
+      this.dropShadow.visible = false;
+      return;
+    }
+    const height = Math.max(0, p.y - bestY);
+    this.dropShadow.visible = true;
+    this.dropShadow.position.set(p.x, bestY + 0.02, p.z);
+    const scale = Math.max(0.55, 1 - height * 0.075);
+    this.dropShadow.scale.setScalar(scale);
+    this.dropShadow.material.opacity = Math.max(0.18, 0.44 - height * 0.035);
   }
 
   animate(dt) {
