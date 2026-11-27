@@ -29,7 +29,7 @@ mkdir -p js/vendor && curl -L -o js/vendor/three.min.js https://cdn.jsdelivr.net
 
 ## Features
 
-- 5 handmade levels: First Steps, Spike Garden, Saw Mill, Boom Town, The Gauntlet. Finishing a level unlocks the next one.
+- 10 handmade levels: First Steps, Spike Garden, Saw Mill, Boom Town, The Gauntlet, Sky Bridges, Lava Keep, Clockwork Spire, Frostbite Ridge, and Cloud Citadel. Finishing a level unlocks the next one.
 - Infinity Mode: an endless procedurally generated parkour course with escalating hazards, changing biomes, checkpoints, and distance tracking (with your best distance saved in `localStorage`).
 - Hazards: spikes, proximity bombs (1 s fuse after you get close), moving saws, bouncing bombs (some also slide side to side).
 - Moving platforms, checkpoints, coins, 10 lives per attempt, a timer, and best time and coin records saved in `localStorage`.

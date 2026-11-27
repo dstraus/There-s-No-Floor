@@ -39,35 +39,48 @@ const Input = (() => {
     applyTouchModeUI();
   }
 
-  function dirsAtPoint(x, y) {
-    const dirs = [];
+  const DIR_MAP = {
+    up: ['up'], down: ['down'], left: ['left'], right: ['right'],
+    'up-left': ['up', 'left'], 'up-right': ['up', 'right'],
+    'down-left': ['down', 'left'], 'down-right': ['down', 'right'],
+  };
+
+  function keyAtPoint(x, y) {
     const el = document.elementFromPoint(x, y);
     const btn = el && el.closest ? el.closest('.dpad-btn') : null;
-    if (btn && btn.dataset.dir) {
-      dirs.push(btn.dataset.dir);
-      return dirs;
-    }
-    if (!dpadEl) return dirs;
+    if (btn && btn.dataset.dir && DIR_MAP[btn.dataset.dir]) return btn.dataset.dir;
+    if (!dpadEl) return null;
     const r = dpadEl.getBoundingClientRect();
-    if (x < r.left - 12 || x > r.right + 12 || y < r.top - 12 || y > r.bottom + 12) return dirs;
+    if (x < r.left - 12 || x > r.right + 12 || y < r.top - 12 || y > r.bottom + 12) return null;
     const nx = (x - (r.left + r.width / 2)) / (r.width / 2);
     const ny = (y - (r.top + r.height / 2)) / (r.height / 2);
-    if (Math.hypot(nx, ny) < 0.22) return dirs;
-    if (ny < -0.3) dirs.push('up');
-    if (ny > 0.3) dirs.push('down');
-    if (nx < -0.3) dirs.push('left');
-    if (nx > 0.3) dirs.push('right');
-    return dirs;
+    if (Math.hypot(nx, ny) < 0.22) return null;
+    const deg = Math.atan2(ny, nx) * 180 / Math.PI; // -180..180 (0=right, -90=up, 90=down)
+    if (deg >= -22.5 && deg < 22.5) return 'right';
+    if (deg >= 22.5 && deg < 67.5) return 'down-right';
+    if (deg >= 67.5 && deg < 112.5) return 'down';
+    if (deg >= 112.5 && deg < 157.5) return 'down-left';
+    if (deg >= 157.5 || deg < -157.5) return 'left';
+    if (deg >= -157.5 && deg < -112.5) return 'up-left';
+    if (deg >= -112.5 && deg < -67.5) return 'up';
+    return 'up-right';
   }
 
   function syncDpad() {
     dpadState.up = dpadState.down = dpadState.left = dpadState.right = false;
-    for (const dirs of dpadTouches.values()) {
-      for (const d of dirs) dpadState[d] = true;
+    const activeKeys = new Set();
+    for (const k of dpadTouches.values()) {
+      if (k && DIR_MAP[k]) {
+        activeKeys.add(k);
+        for (const d of DIR_MAP[k]) dpadState[d] = true;
+      }
     }
-    if (dpadMouseDir) dpadState[dpadMouseDir] = true;
-    for (const dir of ['up', 'down', 'left', 'right']) {
-      if (dpadBtns[dir]) dpadBtns[dir].classList.toggle('active', dpadState[dir]);
+    if (dpadMouseDir && DIR_MAP[dpadMouseDir]) {
+      activeKeys.add(dpadMouseDir);
+      for (const d of DIR_MAP[dpadMouseDir]) dpadState[d] = true;
+    }
+    for (const k in dpadBtns) {
+      dpadBtns[k].classList.toggle('active', activeKeys.has(k));
     }
   }
 
@@ -166,7 +179,7 @@ const Input = (() => {
         e.stopPropagation();
         if (!opts.canLook()) return;
         for (const t of e.changedTouches) {
-          dpadTouches.set(t.identifier, dirsAtPoint(t.clientX, t.clientY));
+          dpadTouches.set(t.identifier, keyAtPoint(t.clientX, t.clientY));
         }
         syncDpad();
       };
