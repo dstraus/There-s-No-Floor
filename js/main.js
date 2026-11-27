@@ -301,30 +301,30 @@
     if (state === 'playing') {
       const l = Input.consumeLook();
       if (Math.abs(l.x) > 0.0001 || Math.abs(l.y) > 0.0001 || Input.looking) {
-        manualLookT = 0.7;
+        manualLookT = 1.5;
+        followT = 0;
       } else if (manualLookT > 0) {
         manualLookT -= dt;
       }
       yaw -= l.x; pitch = Math.max(-0.25, Math.min(1.2, pitch + l.y));
 
-      // Smooth auto-follow camera: aligns behind the player's facing direction as you turn/walk
+      // Gentle auto-follow camera: only drifts slowly behind sustained turns, never snaps on short nudges
       if (autoCam && manualLookT <= 0 && deadT <= 0) {
         const hs = Math.hypot(player.vel.x, player.vel.z);
-        if (hs > 1.0 && Input.move.y >= -0.15) {
-          followT = 0.45;
-        } else if (Input.move.y < -0.15) {
+        if (hs > 1.8 && Input.move.y >= -0.1 && Math.abs(Input.move.x) > 0.2) {
+          followT = Math.min(1, followT + dt);
+          if (followT > 0.2) {
+            const targetYaw = Math.atan2(-player.vel.x, -player.vel.z);
+            let diff = targetYaw - yaw;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            const ramp = Math.min(1, (followT - 0.2) / 0.35);
+            const stepYaw = diff * (1 - Math.exp(-0.9 * dt)) * ramp;
+            const maxStep = 0.72 * dt * ramp;
+            yaw += Math.max(-maxStep, Math.min(maxStep, stepYaw));
+          }
+        } else {
           followT = 0;
-        } else if (followT > 0) {
-          followT -= dt;
-        }
-        if (followT > 0) {
-          const targetYaw = hs > 1.0 ? Math.atan2(-player.vel.x, -player.vel.z) : (player.facing - Math.PI);
-          let diff = targetYaw - yaw;
-          while (diff > Math.PI) diff -= Math.PI * 2;
-          while (diff < -Math.PI) diff += Math.PI * 2;
-          const stepYaw = diff * (1 - Math.exp(-2.8 * dt));
-          const maxStep = 1.8 * dt;
-          yaw += Math.max(-maxStep, Math.min(maxStep, stepYaw));
         }
       }
 
