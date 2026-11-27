@@ -39,10 +39,7 @@
     coins(i) { return +localStorage.getItem('tnf_coins_' + i) || 0; },
     get endlessBest() { return +localStorage.getItem('tnf_endless_best') || 0; },
     set endlessBest(v) { localStorage.setItem('tnf_endless_best', v); },
-    get autoCam() {
-      const v = localStorage.getItem('tnf_auto_cam');
-      return v === null ? Input.isTouch : v !== '0';
-    },
+    get autoCam() { return localStorage.getItem('tnf_auto_cam') === '1'; },
     set autoCam(v) { localStorage.setItem('tnf_auto_cam', v ? '1' : '0'); },
   };
 
