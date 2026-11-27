@@ -35,7 +35,7 @@ mkdir -p js/vendor && curl -L -o js/vendor/three.min.js https://cdn.jsdelivr.net
 - Moving platforms, checkpoints, coins, 10 lives per attempt, a timer, and best time and coin records saved in `localStorage`.
 - Power-ups: Double Jump (15 s), Speed Boost (10 s), Super Jump (12 s), Shield (blocks one hit, but not falling).
 - Procedural chiptune music and sound effects (Web Audio), with toggles in the menu and pause screen.
-- Mobile-friendly assists: full-height tap jumps, wider portrait camera FOV, landing drop shadow, forgiving touch jump timing & ledge grab, and an optional auto-follow camera toggle (off by default).
+- Mobile-friendly assists: full-height tap jumps, wider portrait camera FOV, landing drop shadow, forgiving touch jump timing & ledge grab, and a gentle auto-follow camera toggle (on by default on mobile).
 - Installable PWA: includes a Web App Manifest, custom pixel-art icons, and an offline-capable Service Worker (ready for browser install or PWABuilder / Bubblewrap packaging).
 
 ## Files

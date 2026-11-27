@@ -1,5 +1,5 @@
 // There's No Floor - offline-capable PWA Service Worker
-const CACHE = 'tnf-cache-v12';
+const CACHE = 'tnf-cache-v13';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -11,7 +11,7 @@ const CORE_ASSETS = [
   './js/levels.js?v=12',
   './js/player.js?v=10',
   './js/world.js?v=10',
-  './js/main.js?v=11',
+  './js/main.js?v=13',
   './icons/favicon-32.png',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
