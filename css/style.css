@@ -25,6 +25,8 @@ h2.win { color: #b9f6ca; } h2.lose { color: #ff8a80; }
 .btn:hover { filter: brightness(1.1); }
 .btn:active { transform: translateY(4px); box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3), 0 2px 0 rgba(0,0,0,0.35); }
 .btn.small { font-size: 11px; padding: 10px 16px; min-width: 120px; background: #5c6bc0; }
+.btn.endless { background: #8e24aa; }
+.btn .btn-sub { display: block; font-size: 9px; margin-top: 6px; color: #ffd54f; opacity: 0.95; }
 .btn.off { background: #757575; }
 .help { font-size: 9px; line-height: 1.8; opacity: 0.85; margin-top: 10px; max-width: 520px; }
 body.touch .pc-only, body:not(.touch) .touch-only { display: none; }
@@ -44,7 +46,16 @@ body.touch .pc-only, body:not(.touch) .touch-only { display: none; }
 .hud-left { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; line-height: 2; }
 .hud-right { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 64px; line-height: 2; text-align: right; }
 #hud-time { font-size: 16px; color: #ffeb3b; }
-#hud-lives { color: #ff8a80; } #hud-coins { color: #ffd54f; }
+#hud-lives { color: #ff8a80; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.life-bar { display: inline-flex; gap: 2px; align-items: center; }
+.life-bar .pip { width: 7px; height: 12px; background: rgba(255, 138, 128, 0.28); box-shadow: 2px 2px 0 rgba(0,0,0,0.45); }
+.life-bar .pip.on { background: #ff8a80; }
+#hud-coins { color: #ffd54f; }
+@media (max-width: 480px) {
+  #hud { font-size: 10px; }
+  #hud-time { font-size: 13px; }
+  .life-bar .pip { width: 5px; height: 10px; }
+}
 #hud-powers { position: absolute; top: 80px; left: 14px; display: flex; flex-direction: column; gap: 6px; }
 .chip { font-size: 9px; padding: 6px 8px; color: #fff; box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3); }
 .icon-btn {

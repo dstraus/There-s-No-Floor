@@ -30,8 +30,9 @@ mkdir -p js/vendor && curl -L -o js/vendor/three.min.js https://cdn.jsdelivr.net
 ## Features
 
 - 5 handmade levels: First Steps, Spike Garden, Saw Mill, Boom Town, The Gauntlet. Finishing a level unlocks the next one.
+- Infinity Mode: an endless procedurally generated parkour course with escalating hazards, changing biomes, checkpoints, and distance tracking (with your best distance saved in `localStorage`).
 - Hazards: spikes, proximity bombs (1 s fuse after you get close), moving saws, bouncing bombs (some also slide side to side).
-- Moving platforms, checkpoints, coins, 3 lives per attempt, a timer, and best time and coin records saved in `localStorage`.
+- Moving platforms, checkpoints, coins, 10 lives per attempt, a timer, and best time and coin records saved in `localStorage`.
 - Power-ups: Double Jump (15 s), Speed Boost (10 s), Super Jump (12 s), Shield (blocks one hit, but not falling).
 - Procedural chiptune music and sound effects (Web Audio), with toggles in the menu and pause screen.
 
