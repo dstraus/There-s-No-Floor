@@ -28,6 +28,7 @@ h2.win { color: #b9f6ca; } h2.lose { color: #ff8a80; }
 .btn:active { filter: brightness(0.92); box-shadow: inset 4px 4px 0 rgba(0,0,0,0.35), inset -2px -2px 0 rgba(255,255,255,0.15), 0 2px 0 rgba(0,0,0,0.35); }
 .btn.small { font-size: 11px; padding: 10px 16px; min-width: 120px; background: #5c6bc0; }
 .btn.endless { background: #8e24aa; }
+.btn.install { background: #00897b; }
 .btn .btn-sub { display: block; font-size: 9px; margin-top: 6px; color: #ffd54f; opacity: 0.95; }
 .btn.off { background: #757575; }
 .help { font-size: 9px; line-height: 1.8; opacity: 0.85; margin-top: 10px; max-width: 520px; }

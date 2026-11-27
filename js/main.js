@@ -257,6 +257,7 @@
       case 'music': Sound.setMusic(!Sound.musicOn); refreshToggles(); break;
       case 'touchmode': Input.setTouchMode(Input.touchMode === 'arrows' ? 'joystick' : 'arrows'); refreshToggles(); break;
       case 'autocam': autoCam = !autoCam; save.autoCam = autoCam; refreshToggles(); break;
+      case 'install': triggerInstall(); break;
     }
   });
   addEventListener('keydown', e => {
@@ -399,6 +400,37 @@
     sun.target.position.copy(camT);
 
     renderer.render(scene, camera);
+  }
+
+  // ---------- PWA install prompt & service worker ----------
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    installPrompt = e;
+    const btn = $('btn-install');
+    if (btn) btn.classList.remove('hidden');
+  });
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    const btn = $('btn-install');
+    if (btn) btn.classList.add('hidden');
+  });
+  function triggerInstall() {
+    if (!installPrompt) return;
+    const p = installPrompt;
+    installPrompt = null;
+    p.prompt();
+    if (p.userChoice) {
+      p.userChoice.then(res => {
+        const btn = $('btn-install');
+        if (btn && res && res.outcome === 'accepted') btn.classList.add('hidden');
+      }).catch(() => {});
+    }
+  }
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
   }
 
   refreshToggles();
