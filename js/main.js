@@ -204,6 +204,8 @@
     player.reset(respawn); player.group.visible = true;
     world.resetPowers();
     powers.double = powers.speed = powers.jump = 0;
+    powers.shield = false;
+    player.shield.visible = false;
     invuln = 1.2;
   }
 
