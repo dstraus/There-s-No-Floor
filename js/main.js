@@ -39,7 +39,10 @@
     coins(i) { return +localStorage.getItem('tnf_coins_' + i) || 0; },
     get endlessBest() { return +localStorage.getItem('tnf_endless_best') || 0; },
     set endlessBest(v) { localStorage.setItem('tnf_endless_best', v); },
-    get autoCam() { return localStorage.getItem('tnf_auto_cam') !== '0'; },
+    get autoCam() {
+      const v = localStorage.getItem('tnf_auto_cam');
+      return v === null ? Input.isTouch : v !== '0';
+    },
     set autoCam(v) { localStorage.setItem('tnf_auto_cam', v ? '1' : '0'); },
   };
 
@@ -48,8 +51,7 @@
   let state = 'menu', mode = 'level', li = 0, time = 0, lives = MAX_LIVES, coins = 0;
   let distance = 0, nextMilestone = 100, runStartBest = 0, passedRecord = false, lastSkyHex = '';
   let respawn = new THREE.Vector3(), invuln = 0, deadT = 0, hadLock = false, hudCache = '';
-  let yaw = 0, pitch = 0.35, manualLookT = 0;
-  let autoCam = save.autoCam;
+  let yaw = 0, pitch = 0.35, manualLookT = 0, followT = 0;
   const defaultPitch = () => (camera.aspect < 1 ? 0.35 + (1 - camera.aspect) * 0.25 : 0.35);
   const camT = new THREE.Vector3();
   const skyTarget = new THREE.Color();
@@ -57,6 +59,7 @@
 
   Input.init(canvas, { canLook: () => state === 'playing' });
   if (Input.isTouch) document.body.classList.add('touch');
+  let autoCam = save.autoCam;
 
   // ---------- UI helpers ----------
   const screens = ['menu', 'levels', 'pause', 'complete', 'gameover'];
@@ -129,7 +132,7 @@
     mode = 'level'; li = i; loadScenery(i);
     time = 0; lives = MAX_LIVES; coins = 0; distance = 0; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
-    yaw = 0; pitch = defaultPitch(); manualLookT = 0; hudCache = '';
+    yaw = 0; pitch = defaultPitch(); manualLookT = 0; followT = 0; hudCache = '';
     state = 'playing'; show(null);
     Input.resetTouch();
     Sound.init(); Sound.startMusic(true);
@@ -147,7 +150,7 @@
     time = 0; lives = MAX_LIVES; coins = 0; distance = 0; nextMilestone = 100;
     runStartBest = save.endlessBest; passedRecord = false; invuln = 0; deadT = 0;
     Object.assign(powers, { double: 0, speed: 0, jump: 0, shield: false });
-    yaw = 0; pitch = defaultPitch(); manualLookT = 0; hudCache = '';
+    yaw = 0; pitch = defaultPitch(); manualLookT = 0; followT = 0; hudCache = '';
     state = 'playing'; show(null);
     Input.resetTouch();
     Sound.init(); Sound.startMusic(true);
@@ -304,15 +307,24 @@
       }
       yaw -= l.x; pitch = Math.max(-0.25, Math.min(1.2, pitch + l.y));
 
-      // Gentle auto-follow camera on mobile when walking and not dragging camera
-      if (Input.isTouch && autoCam && manualLookT <= 0 && deadT <= 0) {
+      // Smooth auto-follow camera: aligns behind the player's facing direction as you turn/walk
+      if (autoCam && manualLookT <= 0 && deadT <= 0) {
         const hs = Math.hypot(player.vel.x, player.vel.z);
-        if (hs > 1.2 && Input.move.y >= -0.15) {
-          const targetYaw = Math.atan2(-player.vel.x, -player.vel.z);
+        if (hs > 1.0 && Input.move.y >= -0.15) {
+          followT = 0.45;
+        } else if (Input.move.y < -0.15) {
+          followT = 0;
+        } else if (followT > 0) {
+          followT -= dt;
+        }
+        if (followT > 0) {
+          const targetYaw = hs > 1.0 ? Math.atan2(-player.vel.x, -player.vel.z) : (player.facing - Math.PI);
           let diff = targetYaw - yaw;
           while (diff > Math.PI) diff -= Math.PI * 2;
           while (diff < -Math.PI) diff += Math.PI * 2;
-          yaw += diff * (1 - Math.exp(-2.0 * dt));
+          const stepYaw = diff * (1 - Math.exp(-2.8 * dt));
+          const maxStep = 1.8 * dt;
+          yaw += Math.max(-maxStep, Math.min(maxStep, stepYaw));
         }
       }
 
