@@ -13,17 +13,30 @@ const Input = (() => {
 
   let joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
   let lookTouch = { id: null, x: 0, y: 0 };
+  let jumpTouchId = null;
   let mouseDrag = null;
   let dpadMouseDir = null;
   const dpadTouches = new Map();
   const dpadState = { up: false, down: false, left: false, right: false };
-  let canvas, opts, joyBase, joyKnob, joyHint, dpadEl, dpadBtns = {};
+  let canvas, opts, joyBase, joyKnob, joyHint, dpadEl, jumpBtn, dpadBtns = {};
 
   function pressJump(fromTouch = false) {
     if (!st.jumpHeld) { st.jumpPressed = true; st.lastJumpTouch = !!fromTouch; }
     st.jumpHeld = true;
+    if (jumpBtn) jumpBtn.classList.add('active');
   }
-  function releaseJump() { st.jumpHeld = false; }
+  function releaseJump() {
+    st.jumpHeld = false;
+    if (jumpBtn) jumpBtn.classList.remove('active');
+  }
+
+  function inJumpCorner(x, y) {
+    if (!jumpBtn || !st.isTouch) return false;
+    const r = jumpBtn.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    const pad = 28;
+    return x >= r.left - pad && y >= r.top - pad;
+  }
 
   function applyTouchModeUI() {
     const arrows = touchMode === 'arrows';
@@ -100,6 +113,7 @@ const Input = (() => {
     joyKnob = document.getElementById('joy-knob');
     joyHint = document.getElementById('joy-hint');
     dpadEl = document.getElementById('dpad');
+    jumpBtn = document.getElementById('btn-jump');
     dpadBtns = {};
     if (dpadEl) {
       dpadEl.querySelectorAll('.dpad-btn').forEach(b => { dpadBtns[b.dataset.dir] = b; });
@@ -140,7 +154,10 @@ const Input = (() => {
       e.preventDefault();
       if (!opts.canLook()) return;
       for (const t of e.changedTouches) {
-        if (touchMode === 'joystick' && t.clientX < innerWidth / 2 && joy.id === null) {
+        if (jumpTouchId === null && inJumpCorner(t.clientX, t.clientY)) {
+          jumpTouchId = t.identifier;
+          pressJump(true);
+        } else if (touchMode === 'joystick' && t.clientX < innerWidth / 2 && joy.id === null) {
           joy = { id: t.identifier, ox: t.clientX, oy: t.clientY, x: 0, y: 0 };
           joyBase.style.left = t.clientX + 'px'; joyBase.style.top = t.clientY + 'px';
           joyBase.classList.add('active');
@@ -168,6 +185,7 @@ const Input = (() => {
     }, opt);
     const end = e => {
       for (const t of e.changedTouches) {
+        if (t.identifier === jumpTouchId) { jumpTouchId = null; releaseJump(); }
         if (t.identifier === joy.id) { joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; joyBase.classList.remove('active'); }
         if (t.identifier === lookTouch.id) lookTouch.id = null;
       }
@@ -205,10 +223,19 @@ const Input = (() => {
       });
     }
 
-    const jb = document.getElementById('btn-jump');
-    jb.addEventListener('touchstart', e => { e.preventDefault(); pressJump(true); }, opt);
-    jb.addEventListener('touchend', e => { e.preventDefault(); releaseJump(); }, opt);
-    jb.addEventListener('touchcancel', e => { e.preventDefault(); releaseJump(); }, opt);
+    const jb = jumpBtn;
+    jb.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (e.changedTouches.length && jumpTouchId === null) jumpTouchId = e.changedTouches[0].identifier;
+      pressJump(true);
+    }, opt);
+    const endJb = e => {
+      e.preventDefault();
+      for (const t of e.changedTouches) if (t.identifier === jumpTouchId) jumpTouchId = null;
+      if (jumpTouchId === null) releaseJump();
+    };
+    jb.addEventListener('touchend', endJb, opt);
+    jb.addEventListener('touchcancel', endJb, opt);
     jb.addEventListener('mousedown', () => pressJump(st.isTouch));
     jb.addEventListener('mouseup', releaseJump);
   }
@@ -229,7 +256,7 @@ const Input = (() => {
   function consumeLook() { const l = { x: look.x, y: look.y }; look.x = 0; look.y = 0; return l; }
   function endFrame() { st.jumpPressed = false; }
   function resetTouch() {
-    joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; lookTouch.id = null;
+    joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; lookTouch.id = null; jumpTouchId = null;
     if (joyBase) joyBase.classList.remove('active');
     clearDpad();
     releaseJump();
