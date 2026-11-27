@@ -31,6 +31,12 @@
   <div id="touch" class="hidden">
     <div id="joy-base"><div id="joy-knob"></div></div>
     <div id="joy-hint">MOVE</div>
+    <div id="dpad" class="hidden">
+      <button class="dpad-btn" data-dir="up" aria-label="Up">&#9650;</button>
+      <button class="dpad-btn" data-dir="left" aria-label="Left">&#9664;</button>
+      <button class="dpad-btn" data-dir="down" aria-label="Down">&#9660;</button>
+      <button class="dpad-btn" data-dir="right" aria-label="Right">&#9654;</button>
+    </div>
     <button id="btn-jump">JUMP</button>
   </div>
 
@@ -45,9 +51,12 @@
       <button class="btn small tg-music" data-act="music">MUSIC</button>
       <button class="btn small tg-sfx" data-act="sfx">SFX</button>
     </div>
+    <div class="row">
+      <button class="btn small tg-touch" data-act="touchmode">TOUCH: JOYSTICK</button>
+    </div>
     <div class="help">
       <p class="pc-only">WASD move &middot; SPACE jump &middot; MOUSE look &middot; Q/E turn &middot; ESC pause</p>
-      <p class="touch-only">Left side: move &middot; Right side: look &middot; Button: jump</p>
+      <p class="touch-only" id="touch-help">Left side: move &middot; Right side: look &middot; Button: jump</p>
     </div>
   </div>
 
@@ -64,6 +73,9 @@
     <div class="row">
       <button class="btn small tg-music" data-act="music">MUSIC</button>
       <button class="btn small tg-sfx" data-act="sfx">SFX</button>
+    </div>
+    <div class="row">
+      <button class="btn small tg-touch" data-act="touchmode">TOUCH: JOYSTICK</button>
     </div>
     <button class="btn small" data-act="menu">MAIN MENU</button>
   </div>

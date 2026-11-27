@@ -72,6 +72,12 @@
   function refreshToggles() {
     document.querySelectorAll('.tg-music').forEach(b => { b.textContent = 'MUSIC: ' + (Sound.musicOn ? 'ON' : 'OFF'); b.classList.toggle('off', !Sound.musicOn); });
     document.querySelectorAll('.tg-sfx').forEach(b => { b.textContent = 'SFX: ' + (Sound.sfxOn ? 'ON' : 'OFF'); b.classList.toggle('off', !Sound.sfxOn); });
+    const arrows = Input.touchMode === 'arrows';
+    document.querySelectorAll('.tg-touch').forEach(b => { b.textContent = 'TOUCH: ' + (arrows ? 'ARROWS' : 'JOYSTICK'); });
+    const help = $('touch-help');
+    if (help) help.textContent = arrows
+      ? 'Arrow keys: move \u00b7 Drag screen: look \u00b7 Button: jump'
+      : 'Left side: joystick \u00b7 Right side: look \u00b7 Button: jump';
   }
   function refreshMenu() {
     const best = save.endlessBest;
@@ -237,6 +243,7 @@
       case 'restart': restartCurrent(); break;
       case 'next': startLevel(Math.min(li + 1, LEVELS.length - 1)); break;
       case 'music': Sound.setMusic(!Sound.musicOn); refreshToggles(); break;
+      case 'touchmode': Input.setTouchMode(Input.touchMode === 'arrows' ? 'joystick' : 'arrows'); refreshToggles(); break;
     }
   });
   addEventListener('keydown', e => {

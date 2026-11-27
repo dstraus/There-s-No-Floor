@@ -22,7 +22,7 @@ mkdir -p js/vendor && curl -L -o js/vendor/three.min.js https://cdn.jsdelivr.net
 
 | PC | Touch |
 |----|-------|
-| WASD / arrows: move | Left half of the screen: virtual joystick |
+| WASD / arrows: move | Left half of the screen: virtual joystick (or toggle virtual arrow keys in menu/pause) |
 | Space: jump (hold for a higher jump) | JUMP button |
 | Mouse (click to lock) or Q/E: camera | Drag on the right half: camera |
 | Esc / P: pause, R: restart (paused or game over) | II button: pause |
